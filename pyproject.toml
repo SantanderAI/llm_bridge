@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-bridge"
+version = "0.1.0"
+description = "A tiny, vendor-neutral wrapper for any LLM backend — one interface, pluggable providers (OpenAI, AWS Bedrock, Google Gemini, or bring your own)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Santander AI Lab" }]
+keywords = [
+    "llm",
+    "openai",
+    "bedrock",
+    "gemini",
+    "wrapper",
+    "adapter",
+    "vendor-neutral",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+# Zero required dependencies — the core (mock, callable) is pure stdlib.
+dependencies = []
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+aws = ["boto3>=1.34"]
+google = ["google-genai>=0.3"]
+all = ["openai>=1.0", "boto3>=1.34", "google-genai>=0.3"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "black>=24.0",
+    "mypy>=1.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/SantanderAI/llm_bridge"
+Repository = "https://github.com/SantanderAI/llm_bridge"
+Issues = "https://github.com/SantanderAI/llm_bridge/issues"
+Changelog = "https://github.com/SantanderAI/llm_bridge/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+src = ["src", "tests", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501", "UP006", "UP007", "UP035", "UP045"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["llm_bridge"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39"]
+
+[tool.mypy]
+# Analysis target (mypy requires >=3.10); the package itself supports 3.9+.
+python_version = "3.10"
+files = ["src/llm_bridge"]
+warn_unused_configs = true
+warn_redundant_casts = true
+disallow_untyped_defs = false
+no_implicit_optional = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+addopts = "--cov=llm_bridge --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+branch = true
+source = ["llm_bridge"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]

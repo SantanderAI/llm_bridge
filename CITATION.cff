@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "llm_bridge"
+abstract: >-
+  A tiny, vendor-neutral wrapper for any LLM backend: one interface (LLMClient)
+  with pluggable adapters for OpenAI, AWS Bedrock, and Google Gemini, plus a
+  callable provider to bring your own backend. The core install has zero
+  required dependencies.
+type: software
+authors:
+  - name: "Santander AI Lab"
+license: Apache-2.0
+repository-code: "https://github.com/SantanderAI/llm_bridge"
+url: "https://github.com/SantanderAI/llm_bridge"
+keywords:
+  - llm
+  - openai
+  - bedrock
+  - gemini
+  - vendor-neutral
+  - artificial-intelligence
+version: "0.1.0"
+date-released: "2026-06-12"
