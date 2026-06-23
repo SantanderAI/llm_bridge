@@ -152,6 +152,79 @@ def test_deepseek_base_url_override(fake_deepseek_openai):
 
 
 # --------------------------------------------------------------------------- #
+# Alibaba Qwen
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def fake_qwen_openai(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    class _Msg:
+        content = "qwen-reply"
+
+    class _Choice:
+        message = _Msg()
+        finish_reason = "stop"
+
+    class _Usage:
+        prompt_tokens = 9
+        completion_tokens = 4
+
+    class _Resp:
+        model = "qwen-plus"
+        choices = [_Choice()]
+        usage = _Usage()
+
+    class _Completions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return _Resp()
+
+    class _Chat:
+        completions = _Completions()
+
+    class OpenAI:
+        def __init__(self, **kwargs):
+            captured["init"] = kwargs
+            self.chat = _Chat()
+
+    mod = types.ModuleType("openai")
+    mod.OpenAI = OpenAI
+    monkeypatch.setitem(sys.modules, "openai", mod)
+    return captured
+
+
+def test_qwen_chat_maps_response(fake_qwen_openai):
+    llm = create_llm({"provider": "qwen", "model": "qwen-plus", "api_key": "dashscope-key"})
+    assert llm.provider == "qwen"
+    resp = llm.chat(MESSAGES, temperature=0.1, max_tokens=64, top_p=0.8)
+    assert resp.content == "qwen-reply"
+    assert resp.model == "qwen-plus"
+    assert resp.prompt_tokens == 9
+    assert resp.completion_tokens == 4
+    assert resp.total_tokens == 13
+    assert fake_qwen_openai["init"]["api_key"] == "dashscope-key"
+    assert (
+        fake_qwen_openai["init"]["base_url"]
+        == "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    )
+    assert fake_qwen_openai["model"] == "qwen-plus"
+    assert fake_qwen_openai["messages"] == MESSAGES
+    assert fake_qwen_openai["top_p"] == 0.8
+
+
+def test_qwen_base_url_override(fake_qwen_openai):
+    create_llm(
+        {
+            "provider": "qwen",
+            "model": "qwen-plus",
+            "api_key": "x",
+            "base_url": "https://example.test/qwen",
+        }
+    )
+    assert fake_qwen_openai["init"]["base_url"] == "https://example.test/qwen"
+
+
+# --------------------------------------------------------------------------- #
 # AWS Bedrock
 # --------------------------------------------------------------------------- #
 @pytest.fixture
