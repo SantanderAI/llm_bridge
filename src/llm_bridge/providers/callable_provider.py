@@ -17,14 +17,36 @@ Example:
 
 from __future__ import annotations
 
+import inspect
 import time
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from llm_bridge.base import LLMClient, LLMResponse, Message
 
 
 def _estimate_tokens(text: str) -> int:
     return max(1, len(text.split()) * 4 // 3)
+
+
+def _get_signature(fn: Callable[..., Any]) -> Optional[inspect.Signature]:
+    """Return the callable signature when Python can introspect it."""
+    try:
+        return inspect.signature(fn)
+    except (TypeError, ValueError):
+        return None
+
+
+def _can_bind(
+    signature: inspect.Signature,
+    *args: Any,
+    **kwargs: Any,
+) -> bool:
+    """Check argument compatibility without executing the callable."""
+    try:
+        signature.bind(*args, **kwargs)
+    except TypeError:
+        return False
+    return True
 
 
 class CallableClient(LLMClient):
@@ -44,6 +66,7 @@ class CallableClient(LLMClient):
         if not callable(fn):
             raise TypeError("CallableClient requires a callable `fn`.")
         self._fn = fn
+        self._signature = _get_signature(fn)
         self._model = model
 
     @property
@@ -63,15 +86,28 @@ class CallableClient(LLMClient):
         **kwargs: Any,
     ) -> LLMResponse:
         start = time.perf_counter() * 1000
-        try:
+        signature = self._signature
+        if signature is None or _can_bind(
+            signature,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            **kwargs,
+        ):
             out = self._fn(
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 **kwargs,
             )
-        except TypeError:
+        elif _can_bind(signature, messages):
             out = self._fn(messages)
+        else:
+            raise TypeError(
+                "CallableClient backend must accept either "
+                "(messages, temperature=..., max_tokens=..., **kwargs) "
+                "or (messages)."
+            )
         latency = time.perf_counter() * 1000 - start
 
         if isinstance(out, LLMResponse):
