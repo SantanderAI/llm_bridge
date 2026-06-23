@@ -4,8 +4,8 @@
 
 Dependency-free providers (``mock``, ``callable``) are registered eagerly.
 Providers that wrap an official vendor SDK (``openai``, ``bedrock``,
-``google``) are registered with lazy builders, so importing ``llm_bridge``
-never pulls in a vendor SDK.
+``google``, ``deepseek``) are registered with lazy builders, so importing
+``llm_bridge`` never pulls in a vendor SDK.
 """
 
 from __future__ import annotations
@@ -86,6 +86,11 @@ def _register_builtins() -> None:
 
         return build(cfg)
 
+    def _deepseek(cfg: Dict[str, Any]) -> LLMClient:
+        from llm_bridge.providers.deepseek import build
+
+        return build(cfg)
+
     def _bedrock(cfg: Dict[str, Any]) -> LLMClient:
         from llm_bridge.providers.bedrock import build
 
@@ -97,6 +102,7 @@ def _register_builtins() -> None:
         return build(cfg)
 
     register_provider("openai", _openai)
+    register_provider("deepseek", _deepseek)
     register_provider("bedrock", _bedrock)
     register_provider("aws", _bedrock)  # alias
     register_provider("google", _google)

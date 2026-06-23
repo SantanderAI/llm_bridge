@@ -31,8 +31,9 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Tests run fully offline using the `mock` and `callable` providers — no network
-access, no credentials, and no vendor SDKs required.
+Tests run fully offline using the `mock` and `callable` providers, plus fake SDK
+modules for cloud adapters — no network access, no credentials, and no real
+vendor SDKs required.
 
 ## Adding a new provider
 

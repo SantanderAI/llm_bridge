@@ -1,14 +1,13 @@
 # Copyright (c) 2026 Santander Group
 # SPDX-License-Identifier: Apache-2.0
-"""OpenAI provider using the official ``openai`` SDK.
+"""DeepSeek provider using the OpenAI-compatible API.
 
-Optional dependency — requires ``pip install llm-bridge[openai]``.
-Also works with OpenAI-compatible servers by passing a ``base_url``.
+Optional dependency — requires ``pip install llm-bridge[deepseek]``.
 
 Configuration (config keys, with environment fallbacks):
-    model      (required)
-    api_key    OPENAI_API_KEY
-    base_url   OPENAI_BASE_URL   (optional; for Azure/vLLM/etc.)
+    model      (required)  e.g. "deepseek-v4-pro"
+    api_key    DEEPSEEK_API_KEY
+    base_url   DEEPSEEK_BASE_URL (optional; defaults to https://api.deepseek.com)
 """
 
 from __future__ import annotations
@@ -19,9 +18,11 @@ from typing import Any, Dict, List, Optional, cast
 
 from llm_bridge.base import LLMClient, LLMResponse, Message
 
+DEFAULT_BASE_URL = "https://api.deepseek.com"
 
-class OpenAIClient(LLMClient):
-    """Chat client backed by the official OpenAI Python SDK."""
+
+class DeepSeekClient(LLMClient):
+    """Chat client backed by DeepSeek's OpenAI-compatible API."""
 
     def __init__(
         self,
@@ -30,20 +31,20 @@ class OpenAIClient(LLMClient):
         base_url: Optional[str] = None,
     ):
         if not model:
-            raise ValueError("openai provider requires 'model'.")
+            raise ValueError("deepseek provider requires 'model'.")
         self._model = model
 
         try:
             from openai import OpenAI
         except ImportError as exc:  # pragma: no cover
             raise ImportError(
-                "The 'openai' provider requires the openai SDK. "
-                "Install it with: pip install llm-bridge[openai]"
+                "The 'deepseek' provider requires the openai SDK. "
+                "Install it with: pip install llm-bridge[deepseek]"
             ) from exc
 
         self._client = OpenAI(
-            api_key=api_key or os.environ.get("OPENAI_API_KEY"),
-            base_url=base_url or os.environ.get("OPENAI_BASE_URL"),
+            api_key=api_key or os.environ.get("DEEPSEEK_API_KEY"),
+            base_url=base_url or os.environ.get("DEEPSEEK_BASE_URL") or DEFAULT_BASE_URL,
         )
 
     @property
@@ -52,7 +53,7 @@ class OpenAIClient(LLMClient):
 
     @property
     def provider(self) -> str:
-        return "openai"
+        return "deepseek"
 
     def chat(
         self,
@@ -85,12 +86,12 @@ class OpenAIClient(LLMClient):
         )
 
 
-def build(config: Dict[str, Any]) -> OpenAIClient:
-    """Build an :class:`OpenAIClient` from a config dict."""
+def build(config: Dict[str, Any]) -> DeepSeekClient:
+    """Build a :class:`DeepSeekClient` from a config dict."""
     model = config.get("model")
     if not model:
-        raise ValueError("openai provider requires 'model'.")
-    return OpenAIClient(
+        raise ValueError("deepseek provider requires 'model'.")
+    return DeepSeekClient(
         model=model,
         api_key=config.get("api_key"),
         base_url=config.get("base_url"),

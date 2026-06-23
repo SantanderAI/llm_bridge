@@ -80,6 +80,78 @@ def test_openai_chat_maps_response(fake_openai):
 
 
 # --------------------------------------------------------------------------- #
+# DeepSeek
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def fake_deepseek_openai(monkeypatch):
+    captured: dict[str, Any] = {}
+
+    class _Msg:
+        content = "deepseek-reply"
+
+    class _Choice:
+        message = _Msg()
+        finish_reason = "stop"
+
+    class _Usage:
+        prompt_tokens = 13
+        completion_tokens = 8
+
+    class _Resp:
+        model = "deepseek-v4-pro"
+        choices = [_Choice()]
+        usage = _Usage()
+
+    class _Completions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return _Resp()
+
+    class _Chat:
+        completions = _Completions()
+
+    class OpenAI:
+        def __init__(self, **kwargs):
+            captured["init"] = kwargs
+            self.chat = _Chat()
+
+    mod = types.ModuleType("openai")
+    mod.OpenAI = OpenAI
+    monkeypatch.setitem(sys.modules, "openai", mod)
+    return captured
+
+
+def test_deepseek_chat_maps_response(fake_deepseek_openai):
+    llm = create_llm(
+        {"provider": "deepseek", "model": "deepseek-v4-pro", "api_key": "deepseek-key"}
+    )
+    assert llm.provider == "deepseek"
+    resp = llm.chat(MESSAGES, temperature=0.1, max_tokens=64, reasoning_effort="high")
+    assert resp.content == "deepseek-reply"
+    assert resp.model == "deepseek-v4-pro"
+    assert resp.prompt_tokens == 13
+    assert resp.completion_tokens == 8
+    assert resp.total_tokens == 21
+    assert fake_deepseek_openai["init"]["api_key"] == "deepseek-key"
+    assert fake_deepseek_openai["init"]["base_url"] == "https://api.deepseek.com"
+    assert fake_deepseek_openai["model"] == "deepseek-v4-pro"
+    assert fake_deepseek_openai["messages"] == MESSAGES
+    assert fake_deepseek_openai["reasoning_effort"] == "high"
+
+
+def test_deepseek_base_url_override(fake_deepseek_openai):
+    create_llm(
+        {
+            "provider": "deepseek",
+            "model": "deepseek-v4-flash",
+            "api_key": "x",
+            "base_url": "https://example.test/deepseek",
+        }
+    )
+    assert fake_deepseek_openai["init"]["base_url"] == "https://example.test/deepseek"
+
+
+# --------------------------------------------------------------------------- #
 # AWS Bedrock
 # --------------------------------------------------------------------------- #
 @pytest.fixture
