@@ -37,6 +37,7 @@ dependencies = []
 
 [project.optional-dependencies]
 openai = ["openai>=1.0"]
+deepseek = ["openai>=1.0"]
 aws = ["boto3>=1.34"]
 google = ["google-genai>=0.3"]
 all = ["openai>=1.0", "boto3>=1.34", "google-genai>=0.3"]
