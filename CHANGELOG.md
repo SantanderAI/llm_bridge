@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Prevent the `callable` provider from retrying a backend when the backend
+  itself raises `TypeError`, preserving the original exception and avoiding
+  duplicate side effects.
+
 ### Added
 - Open-source readiness scaffolding:
   - `NOTICE`, `CONTRIBUTING.md` (CLA), `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CODEOWNERS`
