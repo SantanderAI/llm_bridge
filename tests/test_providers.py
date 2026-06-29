@@ -33,9 +33,41 @@ def test_callable_returns_str():
     assert llm.provider == "callable"
 
 
-def test_callable_two_arg_signature():
+def test_callable_messages_only_signature():
     llm = CallableClient(lambda messages: "two")
     assert llm.complete("x").content == "two"
+
+
+def test_callable_internal_type_error_is_not_retried():
+    calls = 0
+
+    def backend(messages, temperature=0.7, max_tokens=1024, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise TypeError("backend failure")
+
+    llm = CallableClient(backend)
+
+    with pytest.raises(TypeError, match="backend failure"):
+        llm.complete("x")
+
+    assert calls == 1
+
+
+def test_callable_rejects_unsupported_signature_without_execution():
+    calls = 0
+
+    def backend(messages, required):
+        nonlocal calls
+        calls += 1
+        return "unreachable"
+
+    llm = CallableClient(backend)
+
+    with pytest.raises(TypeError, match="must accept either"):
+        llm.complete("x")
+
+    assert calls == 0
 
 
 def test_callable_llmresponse_passthrough():
