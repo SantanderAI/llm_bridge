@@ -7,6 +7,11 @@
 # Every PR needs at least one maintainer approval.
 *                       @SantanderAI/llm-bridge-maintainers @SantanderAI/core-admins
 
+# ── Dependencies (Dependabot updates, dev dependencies) ─────────────────────
+# Dependency file updates only need maintainer review, not core-admins.
+pyproject.toml          @SantanderAI/llm-bridge-maintainers
+requirements*.txt       @SantanderAI/llm-bridge-maintainers
+
 # ── Public interface contract (change with extra care) ───────────────────
 # The base contract and registry define the vendor-neutral API surface.
 /src/llm_bridge/base.py        @SantanderAI/llm-bridge-maintainers @SantanderAI/core-admins
