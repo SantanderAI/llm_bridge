@@ -14,6 +14,7 @@ def test_builtins_registered():
         "callable",
         "openai",
         "deepseek",
+        "qwen",
         "bedrock",
         "aws",
         "google",
@@ -37,7 +38,9 @@ def test_overrides_apply():
     assert llm.model == "custom"
 
 
-@pytest.mark.parametrize("provider", ["openai", "deepseek", "bedrock", "aws", "google", "gemini"])
+@pytest.mark.parametrize(
+    "provider", ["openai", "deepseek", "qwen", "bedrock", "aws", "google", "gemini"]
+)
 def test_cloud_provider_validates_model_before_sdk(provider):
     # build() validates required fields before importing any optional SDK,
     # so this raises ValueError regardless of whether the SDK is installed.

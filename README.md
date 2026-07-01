@@ -1,6 +1,6 @@
 # llm_bridge
 
-> **Open source by Santander AI Lab.** A tiny, vendor-neutral **LLM client library** — one interface for **OpenAI, DeepSeek, AWS Bedrock and Google Gemini** (or bring your own AI backend).
+> **Open source by Santander AI Lab.** A tiny, vendor-neutral **LLM client library** — one interface for **OpenAI, DeepSeek, Alibaba Qwen, AWS Bedrock and Google Gemini** (or bring your own AI backend).
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
@@ -15,7 +15,8 @@ Part of [**Santander AI Open Source**](https://github.com/SantanderAI) — open 
 
 A tiny, **vendor-neutral wrapper for any LLM backend**. One small interface,
 pluggable providers. Write your application against `LLMClient` once and switch
-between OpenAI, DeepSeek, AWS Bedrock, Google Gemini, a local server, or your own
+between OpenAI, DeepSeek, Alibaba Qwen, AWS Bedrock, Google Gemini, a local
+server, or your own
 internal backend — without touching your code.
 
 - **Canonical interface + thin SDK adapters.** One contract (`LLMClient`) with
@@ -34,6 +35,7 @@ internal backend — without touching your code.
 pip install llm-bridge                 # core only (no vendor SDKs)
 pip install "llm-bridge[openai]"       # + OpenAI SDK
 pip install "llm-bridge[deepseek]"     # + OpenAI SDK for DeepSeek
+pip install "llm-bridge[qwen]"         # + OpenAI SDK for Qwen/DashScope
 pip install "llm-bridge[aws]"          # + AWS Bedrock (boto3)
 pip install "llm-bridge[google]"       # + Google Gemini (google-genai)
 pip install "llm-bridge[all]"          # everything
@@ -51,6 +53,7 @@ print(llm.complete("Hello!").content)
 # Switch provider by changing one dict — your code stays the same.
 llm = create_llm({"provider": "openai", "model": "gpt-4o-mini"})       # needs [openai] + OPENAI_API_KEY
 llm = create_llm({"provider": "deepseek", "model": "deepseek-v4-pro"})  # needs [deepseek] + DEEPSEEK_API_KEY
+llm = create_llm({"provider": "qwen", "model": "qwen-plus"})            # needs [qwen] + DASHSCOPE_API_KEY
 llm = create_llm({"provider": "bedrock", "model": "<bedrock-model-id>"}) # needs [aws] + AWS creds
 llm = create_llm({"provider": "google", "model": "gemini-2.5-flash"})   # needs [google] + GOOGLE_API_KEY
 
@@ -85,11 +88,13 @@ print(llm.complete("Hi").content)
 | Bring your own | `callable` | none |
 | OpenAI (and OpenAI-compatible) | `openai` | `[openai]` |
 | DeepSeek | `deepseek` | `[deepseek]` |
+| Alibaba Qwen | `qwen` | `[qwen]` |
 | AWS Bedrock (Converse) | `bedrock`, `aws` | `[aws]` |
 | Google Gemini | `google`, `gemini` | `[google]` |
 
 Credentials are read from environment variables (`OPENAI_API_KEY`,
-`DEEPSEEK_API_KEY`, `GOOGLE_API_KEY`/`GEMINI_API_KEY`, standard AWS credential chain). Never
+`DEEPSEEK_API_KEY`, `DASHSCOPE_API_KEY`, `GOOGLE_API_KEY`/`GEMINI_API_KEY`,
+standard AWS credential chain). Never
 hardcode secrets.
 
 The `openai` provider also targets any **OpenAI-compatible** endpoint (vLLM,
@@ -99,6 +104,11 @@ Ollama, Azure OpenAI, or an internal gateway): pass a `base_url` (or set
 The `deepseek` provider uses DeepSeek's OpenAI-compatible API via the OpenAI
 SDK, defaults to `https://api.deepseek.com`, and accepts `base_url` or
 `DEEPSEEK_BASE_URL` for compatible endpoints.
+
+The `qwen` provider uses Alibaba Model Studio/DashScope's OpenAI-compatible API
+via the OpenAI SDK. It defaults to
+`https://dashscope-intl.aliyuncs.com/compatible-mode/v1` and accepts `base_url`
+or `DASHSCOPE_BASE_URL` for other regions or workspaces.
 
 ## The interface
 
@@ -132,13 +142,13 @@ Implement `LLMClient`, expose `build(config) -> LLMClient`, and register it in
 
 See [`examples/`](examples): `mock_example.py`, `callable_example.py`,
 `openai_example.py`, `deepseek_example.py`, `bedrock_example.py`,
-`google_example.py`.
+`qwen_example.py`, `bedrock_example.py`, `google_example.py`.
 
 ## Requirements
 
 - Python 3.9+
 - No required runtime dependencies for the core (`mock`, `callable`).
-- Optional vendor SDKs are installed on demand via extras (`[openai]`, `[aws]`, `[google]`, `[all]`).
+- Optional vendor SDKs are installed on demand via extras (`[openai]`, `[deepseek]`, `[qwen]`, `[aws]`, `[google]`, `[all]`).
 
 ## Contributing
 
