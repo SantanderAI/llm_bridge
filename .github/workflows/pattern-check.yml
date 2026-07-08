@@ -57,10 +57,9 @@ jobs:
             # Internal hostnames / TLDs
             '\.corp\.santander\.com'
             '\.intranet\.santander\.com'
-            'cloudcenter\.corp'
+            '\.corp\b'
             # Internal Artifactory / registries
             'artifactory\.santander\.'
-            'nexus\.alm\.'
           )
 
           PATTERN_ERE=$(IFS='|'; echo "${PATTERNS[*]}")
