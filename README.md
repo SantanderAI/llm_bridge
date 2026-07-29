@@ -110,6 +110,13 @@ via the OpenAI SDK. It defaults to
 `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` and accepts `base_url`
 or `DASHSCOPE_BASE_URL` for other regions or workspaces.
 
+The Google provider accepts `top_p`, `top_k`, `stop_sequences`, and `seed` in
+both `chat()` and `complete()`. `stop` is an alias for `stop_sequences`; passing
+both, or passing any other keyword, raises `TypeError` before
+the request is sent. Google finish reasons are returned as lower-case native
+values such as `stop`, `max_tokens`, and `safety`; a missing or unspecified
+reason is returned as `unknown`.
+
 ## The interface
 
 ```python

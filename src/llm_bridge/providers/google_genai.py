@@ -12,10 +12,55 @@ Configuration (config keys, with environment fallbacks):
 from __future__ import annotations
 
 import os
+import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from llm_bridge.base import LLMClient, LLMResponse, Message, split_system_messages
+
+_GENERATION_ARGUMENTS = ("top_p", "top_k", "stop_sequences", "seed")
+_FINISH_REASON_TOKEN = re.compile(r"\A[A-Za-z][A-Za-z0-9_]*\Z")
+
+
+def _generation_config_kwargs(kwargs: Mapping[str, Any]) -> Dict[str, Any]:
+    """Validate and map Google-specific generation arguments."""
+    unknown = sorted(set(kwargs) - set(_GENERATION_ARGUMENTS) - {"stop"})
+    if unknown:
+        raise TypeError(f"Unsupported Google generation arguments: {', '.join(unknown)}")
+    if "stop" in kwargs and "stop_sequences" in kwargs:
+        raise TypeError("'stop' and 'stop_sequences' cannot be used together")
+
+    config = {name: kwargs[name] for name in _GENERATION_ARGUMENTS if name in kwargs}
+    if "stop" in kwargs:
+        config["stop_sequences"] = kwargs["stop"]
+    return config
+
+
+def _extract_finish_reason(response: Any) -> str:
+    """Return the first lower-case Google finish-reason token."""
+    try:
+        candidates = getattr(response, "candidates", None)
+        if not candidates:
+            return "unknown"
+        candidate = candidates[0]
+        if candidate is None:
+            return "unknown"
+        reason = getattr(candidate, "finish_reason", None)
+        if reason is None:
+            return "unknown"
+        try:
+            value = reason.value
+        except AttributeError:
+            value = reason if isinstance(reason, str) else None
+    except AttributeError:
+        return "unknown"
+
+    if not isinstance(value, str):
+        return "unknown"
+    value = value.strip()
+    if value.upper() == "FINISH_REASON_UNSPECIFIED" or not _FINISH_REASON_TOKEN.fullmatch(value):
+        return "unknown"
+    return value.lower()
 
 
 class GoogleClient(LLMClient):
@@ -28,7 +73,7 @@ class GoogleClient(LLMClient):
 
         try:
             from google import genai
-        except ImportError as exc:  # pragma: no cover
+        except ImportError as exc:
             raise ImportError(
                 "The 'google' provider requires the google-genai SDK. "
                 "Install it with: pip install llm-bridge[google]"
@@ -54,6 +99,7 @@ class GoogleClient(LLMClient):
         max_tokens: int = 1024,
         **kwargs: Any,
     ) -> LLMResponse:
+        generation_config = _generation_config_kwargs(kwargs)
         from google.genai import types
 
         system_text, turns = split_system_messages(messages)
@@ -68,6 +114,7 @@ class GoogleClient(LLMClient):
             temperature=temperature,
             max_output_tokens=max_tokens,
             system_instruction=system_text,
+            **generation_config,
         )
 
         start = time.perf_counter() * 1000
@@ -82,7 +129,7 @@ class GoogleClient(LLMClient):
             model=self._model,
             prompt_tokens=getattr(usage, "prompt_token_count", 0) if usage else 0,
             completion_tokens=getattr(usage, "candidates_token_count", 0) if usage else 0,
-            finish_reason="stop",
+            finish_reason=_extract_finish_reason(resp),
             latency_ms=latency,
             raw=resp,
         )
