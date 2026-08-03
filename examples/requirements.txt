@@ -1,0 +1,8 @@
+# Core
+llm-bridge
+
+# Web framework
+flask>=3.0
+
+# Optional: remote LLM providers
+# llm-bridge[openai]
